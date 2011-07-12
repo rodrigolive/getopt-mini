@@ -1,0 +1,41 @@
+=pod 
+
+=head1 NAME
+
+Getopt::Mini - yet another yet-another Getopt module
+
+=head1 VERSION
+
+version 0.01
+
+=head1 SYNOPSIS
+
+    use Getopt::Mini;
+    say $ARGV{'flag'};
+
+=head1 DESCRIPTION
+
+This is yet another Getopt module, a very lightweight one. It's not declarative 
+in any way, ie, it does not support specs, like L<Getopt::Long> does.
+
+Actually, it can validate your parameters using the L<Data::Validator> syntax. 
+But that's a hidden feature for now (you'll need to install L<Data::Validator> yourself). 
+
+=head1 USAGE
+
+    perl myprog.pl -h -f foo --f bar
+    use Getopt::Mini;   # parses the @ARGV into %ARGV
+    say YAML::Dump \%ARGV;
+    ---
+    h: ~
+    f: 
+      - foo
+      - bar
+
+Or you can just use a modular version:
+
+    use Getopt::Mini norun=>1; # nothing happens
+
+    getopt;   #  imports into %ARGV
+    my %argv = getopt;   #  imports into %argv instead
+
