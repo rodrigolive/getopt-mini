@@ -9,7 +9,7 @@ sub import {
     my $class = shift;
     my %args = @_;
     if( ! defined $args{norun} ) {
-        getopt( arrays=>0, %args );
+        getopt( arrays=>0 );
     } else {
         my $where = caller(0);
         no strict 'refs';
@@ -30,15 +30,15 @@ sub getopt {
     my @argv = @_ == 0 ? @ARGV 
       : do {
            %opts = @_; 
-           die 'Missing parameter: getopt( argv=>\@ARGV )'
-               unless ref $opts{argv} eq 'ARRAY';
-           @{ delete $opts{argv} };
+           @{ delete $opts{argv} || [] };
       };
+    @argv or @argv = @ARGV;
+    return unless @argv;
     for my $opt (@argv) {
         if ( $opt =~ m/^-+(.+)/ ) {
             $last_opt = $1;
             $last_done=0;
-            warn $last_opt;
+            #warn $last_opt;
             if( $last_opt =~ m/^(.*)\=(.*)$/ ) {
                 push @{ $hash{$1} }, $2 ;
                 $last_done= 1;
