@@ -27,13 +27,13 @@ sub getopt {
     my ( $last_opt, $last_done, %hash );
     my %opts;
     # get my own opts
-    my @argv = grep {
-        if( ref $_ eq 'HASH' ) { 
-            %opts = ( %opts, %$_ ) ;
-            0;
-        }  else { 1 }
-    } @ARGV;
-    @argv = @{ $opts{argv} } if ref $opts{argv} eq 'ARRAY';
+    my @argv = @_ == 0 ? @ARGV 
+      : do {
+           %opts = @_; 
+           die 'Missing parameter: getopt( argv=>\@ARGV )'
+               unless ref $opts{argv} eq 'ARRAY';
+           @{ delete $opts{argv} };
+      };
     for my $opt (@argv) {
         if ( $opt =~ m/^-+(.+)/ ) {
             $last_opt = $1;
