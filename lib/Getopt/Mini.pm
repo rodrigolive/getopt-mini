@@ -1,4 +1,4 @@
-package Getopt::Mini;
+package Getopt::Hash;
 use strict;
 use warnings;
 use utf8::all;
@@ -8,12 +8,24 @@ our $VERSION = '0.01';
 sub import {
     my $class = shift;
     my %args = @_;
-    if( ! defined $args{norun} ) {
-        getopt( arrays=>0 );
-    } else {
+    if( defined $args{var} ) {
+        if( $args{var} !~ /::/ ) {
+            my $where = caller(0);
+            $args{var} = $where . '::' . $args{var};
+        }
+        my %hash = getopt( arrays=>0 );
+        no strict 'refs';
+        *{ $args{var} } = \%hash; 
+    }
+    elsif( defined $args{later} ) {
+        # import getopt() so that user can call it
         my $where = caller(0);
         no strict 'refs';
         *{ $where . '::getopt' } = \&getopt;
+    }
+    else {
+        # into %ARGV
+        getopt( arrays=>0 );
     }
     #unshift @ARGV, @barewords;
     return;
@@ -35,10 +47,12 @@ sub getopt {
     @argv or @argv = @ARGV;
     return unless @argv;
     for my $opt (@argv) {
-        if ( $opt =~ m/^-+(.+)/ ) {
+        if ( $opt =~ m/^-(\w)$/ ) {   # single letter
+            $hash{$1} ++;
+            $last_done= 1;
+        } elsif ( $opt =~ m/^-+(.+)/ ) {
             $last_opt = $1;
             $last_done=0;
-            #warn $last_opt;
             if( $last_opt =~ m/^(.*)\=(.*)$/ ) {
                 push @{ $hash{$1} }, $2 ;
                 $last_done= 1;
@@ -55,14 +69,18 @@ sub getopt {
     }
     # convert single option => scalar
     for( keys %hash ) {
+        next unless ref( $hash{$_} ) eq 'ARRAY';
         if( @{ $hash{$_} } == 0 ) {
             $hash{$_} = ();
         } elsif( @{ $hash{$_} } == 1 ) {
             $hash{$_} = $hash{$_}->[0]; 
         }
     }
-    defined wantarray and return %hash;
-    %ARGV = %hash;
+    if( defined wantarray ) {
+        return %hash;
+    } else {
+        %ARGV = %hash;
+    }
 }
 
 sub getopt_validatex {
@@ -88,11 +106,11 @@ __END__
 
 =head1 NAME
 
-Getopt::Mini - yet another yet-another Getopt module
+Getopt::Hash - yet another yet-another Getopt module
 
 =head1 SYNOPSIS
 
-    use Getopt::Mini;
+    use Getopt::Hash;
     say $ARGV{'flag'};
 
 =head1 DESCRIPTION
@@ -100,25 +118,71 @@ Getopt::Mini - yet another yet-another Getopt module
 This is yet another Getopt module, a very lightweight one. It's not declarative 
 in any way, ie, it does not support specs, like L<Getopt::Long> does.
 
-Actually, it can validate your parameters using the L<Data::Validator> syntax. 
+On the other hand, it can validate your parameters using the L<Data::Validator> syntax. 
 But that's a hidden feature for now (you'll need to install L<Data::Validator> yourself). 
 
 =head1 USAGE
 
-    perl myprog.pl -h -f foo --f bar
-    use Getopt::Mini;   # parses the @ARGV into %ARGV
+The rules:
+
+    * -<char>              
+        does not consume barewords (ie. -f, -h, ...)
+
+    * -<str> <bareword>
+    * --<str> <bareword>  
+        will eat up the next bare word (-type f, --file f.txt)
+
+    * -<str>=<val> and --<str>=<val> 
+        consumes its value and nothing more 
+
+    * <str>
+        gets pushed into an array in $ARGV{''}
+
+Some code examples:
+
+    perl myprog.pl -h -file foo --file bar
+    use Getopt::Hash;   # parses the @ARGV into %ARGV
     say YAML::Dump \%ARGV;
     ---
     h: ~
-    f: 
+    file: 
       - foo
       - bar
+    
+    # single flags like -h are checked with exists:
+    
+    say 'help...' if exists $ARGV{'h'};
+
+    # barewords are pushed into an empty key ''
+    
+    perl myprog.pl file1.c file2.c 
+    say "file: $_" for @{ $ARGV{''} };
 
 Or you can just use a modular version:
 
-    use Getopt::Mini norun=>1; # nothing happens
+    use Getopt::Hash later=>1; # nothing happens
 
     getopt;   #  imports into %ARGV
     my %argv = getopt;   #  imports into %argv instead
+
+=head3 array mode
+
+There's also a special mode that can be set with C<array => 1> that will
+make a flag consume all following barewords:
+
+    perl myprog.pl -a -b --files f1.txt f2.txt
+    use Getopt::Hash array => 1; 
+    say YAML::Dump \%ARGV;
+    ---
+    h: ~
+    file: 
+      - foo
+      - bar
+
+=head1 SEE ALSO
+
+L<Getopt::Whatever> - no declarative spec like this module,
+but the options in %ARGV and @ARGV are not where I expect them
+to be. 
 
 =cut
