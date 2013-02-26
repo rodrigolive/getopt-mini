@@ -3,7 +3,7 @@ use warnings;
 
 use Test::More;
 
-use Getopt::Hash later=>1;
+use Getopt::Mini later=>1;
 
 {
     my %args = getopt( argv=>[ '-data', '99', '--foo', '11', '-foo', 22 ] );

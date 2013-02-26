@@ -15,11 +15,12 @@ version 0.01
 
 =head1 DESCRIPTION
 
-This is yet another Getopt module, a very lightweight one. It's not declarative 
-in any way, ie, it does not support specs, like L<Getopt::Long> does.
+This is, yup, yet another Getopt module, a very lightweight one. It's not declarative 
+in any way, ie, it does not support specs, like L<Getopt::Long> et al do.
 
 On the other hand, it can validate your parameters using the L<Data::Validator> syntax. 
-But that's a hidden feature for now (you'll need to install L<Data::Validator> yourself). 
+But that's a hidden feature for now (you'll need to install L<Data::Validator> yourself
+and find a way to run it by reading this source code). 
 
 =head1 NAME
 
@@ -40,7 +41,7 @@ The rules:
     * --<str> <bareword>  
         will eat up the next bare word (-type f, --file f.txt)
 
-    * -<str>=<val> and --<str>=<val> 
+    * -<char|str>=<val> and --<str>=<val> 
         consumes its value and nothing more 
 
     * <str>
@@ -61,7 +62,7 @@ Some code examples:
     
     say 'help...' if exists $ARGV{'h'};
 
-    # barewords are pushed into an empty key ''
+    # barewords are pushed into the key '_'
     
     perl myprog.pl file1.c file2.c 
     say "file: $_" for @{ $ARGV{''} };
@@ -86,6 +87,14 @@ make a flag consume all following barewords:
     file: 
       - foo
       - bar
+
+=head1 BUGS
+
+This is *ALPHA* software. And despite its small footprint,
+this is lurking with nasty bugs and potential api changes. 
+
+Complaints should be filed to the Getopt Foundation, which
+has been treating severe NIH syndrome since 1980.
 
 =head1 SEE ALSO
 

@@ -3,6 +3,6 @@ use warnings;
 
 use Test::More tests => 1; 
 
-use_ok 'Getopt::Hash';
+use_ok 'Getopt::Mini';
 
 done_testing;
