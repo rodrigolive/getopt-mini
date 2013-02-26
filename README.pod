@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Getopt::Hash
+Getopt::Mini
 
 =head1 VERSION
 
@@ -10,7 +10,7 @@ version 0.01
 
 =head1 SYNOPSIS
 
-    use Getopt::Hash;
+    use Getopt::Mini;
     say $ARGV{'flag'};
 
 =head1 DESCRIPTION
@@ -24,7 +24,7 @@ and find a way to run it by reading this source code).
 
 =head1 NAME
 
-Getopt::Hash - yet another yet-another Getopt module
+Getopt::Mini - yet another yet-another Getopt module
 
 =head1 VERSION
 
@@ -50,7 +50,7 @@ The rules:
 Some code examples:
 
     perl myprog.pl -h -file foo --file bar
-    use Getopt::Hash;   # parses the @ARGV into %ARGV
+    use Getopt::Mini;   # parses the @ARGV into %ARGV
     say YAML::Dump \%ARGV;
     ---
     h: 1
@@ -69,7 +69,7 @@ Some code examples:
 
 Or you can just use a modular version:
 
-    use Getopt::Hash later=>1; # nothing happens
+    use Getopt::Mini later=>1; # nothing happens
 
     getopt;   #  imports into %ARGV
     my %argv = getopt;   #  imports into %argv instead
@@ -80,7 +80,7 @@ There's also a special mode that can be set with C<array => 1> that will
 make a flag consume all following barewords:
 
     perl myprog.pl -a -b --files f1.txt f2.txt
-    use Getopt::Hash array => 1; 
+    use Getopt::Mini array => 1; 
     say YAML::Dump \%ARGV;
     ---
     h: ~
