@@ -1,10 +1,10 @@
 package Getopt::Mini;
 use strict;
 use warnings;
-use utf8::all;
- 
-our $VERSION = '0.01';
- 
+use Encode qw();
+
+our $VERSION = '0.02';
+
 sub import {
     my $class = shift;
     my %args = @_;
@@ -15,7 +15,7 @@ sub import {
         }
         my %hash = getopt( arrays=>0 );
         no strict 'refs';
-        *{ $args{var} } = \%hash; 
+        *{ $args{var} } = \%hash;
     }
     elsif( defined $args{later} ) {
         # import getopt() so that user can call it
@@ -40,12 +40,12 @@ sub getopt {
     my %opts;
     # get my own opts
     my @argv = @_ == 0
-      ? @ARGV 
+      ? @ARGV
       : do {
-           %opts = @_; 
+           %opts = @_;
            @{ delete $opts{argv} || [] };
       };
-    @argv or @argv = @ARGV;
+    if (not @argv){ push(@argv, Encode::decode('UTF-8' ,$_) ) for @ARGV; }
     return () unless @argv;
     $hash{_argv} = [ @argv ];
     for my $opt (@argv) {
@@ -65,7 +65,7 @@ sub getopt {
         else {
             #$opt = Encode::encode_utf8($opt) if Encode::is_utf8($opt);
             $last_opt ='' if !$opts{arrays} && ( $last_done || ! defined $last_opt );
-            push @{ $hash{$last_opt} }, $opt; 
+            push @{ $hash{$last_opt} }, $opt;
             $last_done = 1;
         }
     }
@@ -75,7 +75,7 @@ sub getopt {
         if( @{ $hash{$_} } == 0 ) {
             $hash{$_} = ();
         } elsif( @{ $hash{$_} } == 1 ) {
-            $hash{$_} = $hash{$_}->[0]; 
+            $hash{$_} = $hash{$_}->[0];
         }
     }
     if( defined wantarray ) {
@@ -93,12 +93,12 @@ sub getopt_validate {
     @_ = ($rule, %ARGV );
     goto \&Data::Validator::validate;
 }
- 
+
 1;
- 
+
 __END__
 
-=pod 
+=pod
 
 =head1 NAME
 
@@ -111,26 +111,26 @@ Getopt::Mini - yet another yet-another Getopt module
 
 =head1 DESCRIPTION
 
-This is, yup, yet another Getopt module, a very lightweight one. It's not declarative 
+This is, yup, yet another Getopt module, a very lightweight one. It's not declarative
 in any way, ie, it does not support specs, like L<Getopt::Long> et al do.
 
-On the other hand, it can validate your parameters using the L<Data::Validator> syntax. 
+On the other hand, it can validate your parameters using the L<Data::Validator> syntax.
 But that's a hidden feature for now (you'll need to install L<Data::Validator> yourself
-and find a way to run it by reading this source code). 
+and find a way to run it by reading this source code).
 
 =head1 USAGE
 
 The rules:
 
-    * -<char>              
+    * -<char>
         does not consume barewords (ie. -f, -h, ...)
 
     * -<str> <bareword>
-    * --<str> <bareword>  
+    * --<str> <bareword>
         will eat up the next bare word (-type f, --file f.txt)
 
-    * -<char|str>=<val> and --<str>=<val> 
-        consumes its value and nothing more 
+    * -<char|str>=<val> and --<str>=<val>
+        consumes its value and nothing more
 
     * <str>
         gets pushed into an array in $ARGV{''}
@@ -142,17 +142,17 @@ Some code examples:
     say YAML::Dump \%ARGV;
     ---
     h: 1
-    file: 
+    file:
       - foo
       - bar
-    
+
     # single flags like -h are checked with exists:
-    
+
     say 'help...' if exists $ARGV{'h'};
 
     # barewords are pushed into the key '_'
-    
-    perl myprog.pl file1.c file2.c 
+
+    perl myprog.pl file1.c file2.c
     say "file: $_" for @{ $ARGV{''} };
 
 Or you can just use a modular version:
@@ -168,18 +168,18 @@ There's also a special mode that can be set with C<array => 1> that will
 make a flag consume all following barewords:
 
     perl myprog.pl -a -b --files f1.txt f2.txt
-    use Getopt::Mini array => 1; 
+    use Getopt::Mini array => 1;
     say YAML::Dump \%ARGV;
     ---
     h: ~
-    file: 
+    file:
       - foo
       - bar
 
 =head1 BUGS
 
 This is *ALPHA* software. And despite its small footprint,
-this is lurking with nasty bugs and potential api changes. 
+this is lurking with nasty bugs and potential api changes.
 
 Complaints should be filed to the Getopt Foundation, which
 has been treating severe NIH syndrome since 1980.
@@ -188,9 +188,9 @@ has been treating severe NIH syndrome since 1980.
 
 L<Getopt::Whatever> - no declarative spec like this module,
 but the options in %ARGV and @ARGV are not where I expect them
-to be. 
+to be.
 
-L<Getopt::Casual> - similar to this module, but very keen on 
+L<Getopt::Casual> - similar to this module, but very keen on
 turning entries into single param options.
 
 =cut
