@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use utf8::all;
  
-our $VERSION = '0.01';
+our $VERSION = '0.02';
  
 sub import {
     my $class = shift;
@@ -45,14 +45,21 @@ sub getopt {
            %opts = @_; 
            @{ delete $opts{argv} || [] };
       };
-    @argv or @argv = @ARGV;
+    @argv = @ARGV unless @argv > 0;
     return () unless @argv;
     $hash{_argv} = [ @argv ];
-    for my $opt (@argv) {
-        if ( $opt =~ m/^-(\w)$/ ) {   # single letter
-            $hash{$1} ++;
+    while(@argv) {
+        my $arg = shift @argv;
+        if ( $arg =~ m/^-(\w)$/ ) {   # single letter
+            my $flag = $1;
+            if( $opts{hungry_flags} && defined $argv[0] && $argv[0] !~ /^-/ ) {
+                $hash{$flag} = shift @argv;
+            } else {
+                $hash{$flag} ++;
+            }
             $last_done= 1;
-        } elsif ( $opt =~ m/^-+(.+)/ ) {
+        } 
+        elsif ( $arg =~ m/^-+(.+)/ ) {
             $last_opt = $1;
             $last_done=0;
             if( $last_opt =~ m/^(.*)\=(.*)$/ ) {
@@ -63,9 +70,9 @@ sub getopt {
             }
         }
         else {
-            #$opt = Encode::encode_utf8($opt) if Encode::is_utf8($opt);
+            #$arg = Encode::encode_utf8($arg) if Encode::is_utf8($arg);
             $last_opt ='' if !$opts{arrays} && ( $last_done || ! defined $last_opt );
-            push @{ $hash{$last_opt} }, $opt; 
+            push @{ $hash{$last_opt} }, $arg; 
             $last_done = 1;
         }
     }
@@ -73,7 +80,7 @@ sub getopt {
     for( keys %hash ) {
         next unless ref( $hash{$_} ) eq 'ARRAY';
         if( @{ $hash{$_} } == 0 ) {
-            $hash{$_} = ();
+            $hash{$_} = $opts{define} ? 1 : ();
         } elsif( @{ $hash{$_} } == 1 ) {
             $hash{$_} = $hash{$_}->[0]; 
         }
@@ -95,14 +102,18 @@ sub getopt_validate {
 }
  
 1;
- 
+
 __END__
 
-=pod 
+=pod
 
 =head1 NAME
 
-Getopt::Mini - yet another yet-another Getopt module
+Getopt::Mini
+
+=head1 VERSION
+
+version 0.02
 
 =head1 SYNOPSIS
 
@@ -118,12 +129,21 @@ On the other hand, it can validate your parameters using the L<Data::Validator> 
 But that's a hidden feature for now (you'll need to install L<Data::Validator> yourself
 and find a way to run it by reading this source code). 
 
+=head1 NAME
+
+Getopt::Mini - yet another yet-another Getopt module
+
+=head1 VERSION
+
+version 0.02
+
 =head1 USAGE
 
 The rules:
 
     * -<char>              
         does not consume barewords (ie. -f, -h, ...)
+        unless you set hungry_flags=>1
 
     * -<str> <bareword>
     * --<str> <bareword>  
@@ -192,5 +212,16 @@ to be.
 
 L<Getopt::Casual> - similar to this module, but very keen on 
 turning entries into single param options.
+
+=head1 AUTHOR
+
+Rodrigo de Oliveira <rodrigolive@gmail.com>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Rodrigo de Oliveira.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =cut
